@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SmartFit IA">
+<title>SMARTFIT IA — Mobile V15</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & VARS ── */
+:root{
+  --bg:#09100a;--card:#111a12;--card2:#162018;--border:#1e301f;
+  --g:#2d6e2a;--g2:#3d9c39;--neon:#5ecb59;--light:#9ad996;
+  --text:#edf5ec;--muted:#6b8f6a;--dim:#243826;
+  --warn:#c4841a;--danger:#c03030;--blue:#3b82f6;
+  --nav-h:72px; --top-h:60px;
+  --radius:16px; --radius-sm:10px;
+  --shadow:0 4px 24px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'DM Sans',sans-serif;color:var(--text);display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:var(--top-h);display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;background:var(--card);border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding-top:env(safe-area-inset-top);
+}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.menu-btn{background:none;border:none;color:var(--text);cursor:pointer;padding:6px;border-radius:8px;}
+.menu-btn svg{display:block;}
+.tb-logo{font-size:17px;font-weight:800;letter-spacing:-.3px;}
+.tb-logo span{color:var(--neon);}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.notif-btn{background:none;border:none;color:var(--muted);cursor:pointer;position:relative;padding:6px;}
+.notif-dot{width:7px;height:7px;background:var(--neon);border-radius:50%;position:absolute;top:5px;right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(94,203,89,.5);}50%{box-shadow:0 0 0 5px rgba(94,203,89,0);}}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.conn-dot.online{background:var(--neon);animation:pulse 2s infinite;}
+.conn-dot.offline{background:var(--danger);}
+
+/* ── SCROLL AREA ── */
+.screen-area{
+  position:fixed;top:var(--top-h);left:0;right:0;
+  bottom:var(--nav-h);overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;scroll-behavior:smooth;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+  background:var(--card);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;
+  padding-bottom:env(safe-area-inset-bottom);z-index:100;
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 14px;border-radius:12px;transition:.18s;flex:1;position:relative;}
+.nav-item.active .nav-icon{color:var(--neon);}
+.nav-item.active .nav-label{color:var(--neon);}
+.nav-icon{font-size:20px;color:var(--muted);transition:.18s;}
+.nav-label{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:.3px;transition:.18s;}
+.nav-fab{
+  width:52px;height:52px;background:var(--neon);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;color:#09100a;font-weight:800;
+  box-shadow:0 4px 20px rgba(94,203,89,.4);cursor:pointer;
+  transform:translateY(-8px);transition:.2s;flex-shrink:0;
+}
+.nav-fab:active{transform:translateY(-6px) scale(.96);}
+
+/* ── PAGES ── */
+.page{display:none;min-height:100%;animation:fadeIn .22s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ── DASHBOARD ── */
+.dash-header{
+  background:linear-gradient(135deg,#0d1f0e 0%,#152718 60%,#0d1a0e 100%);
+  padding:22px 20px 18px;
+  border-bottom:1px solid var(--border);
+}
+.dash-greeting{font-size:13px;color:var(--neon);font-weight:600;letter-spacing:.5px;margin-bottom:3px;}
+.dash-name{font-size:24px;font-weight:800;line-height:1.1;margin-bottom:4px;}
+.dash-sub{font-size:12px;color:var(--muted);line-height:1.4;}
+.status-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(94,203,89,.12);border:1px solid rgba(94,203,89,.25);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:var(--neon);margin-top:10px;}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;}
+.stat-val{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--neon);line-height:1;}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.stat-today{font-size:10px;font-weight:700;color:var(--light);margin-top:2px;}
+
+.section{padding:0 20px 16px;}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.section-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.section-link{font-size:11px;color:var(--neon);font-weight:600;}
+
+.recent-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;margin-bottom:8px;}
+.ri-av{width:38px;height:38px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;}
+.ri-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.ri-meta{font-size:10px;color:var(--muted);}
+.ri-badge{margin-left:auto;padding:4px 10px;border-radius:20px;font-size:9px;font-weight:700;}
+.badge-ok{background:rgba(94,203,89,.15);color:var(--neon);border:1px solid rgba(94,203,89,.3);}
+.badge-pend{background:rgba(196,132,26,.12);color:#d4901e;border:1px solid rgba(196,132,26,.3);}
+
+.cal-status{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;}
+.cal-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid rgba(30,48,31,.5);}
+.cal-row:last-child{border-bottom:none;}
+.cal-key{color:var(--muted);}
+.cal-val{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.ok{color:var(--neon);}.warn{color:#d4901e;}.off{color:var(--danger);}
+
+/* ── NOVO LEVANTAMENTO (3 steps) ── */
+.stepper{display:flex;align-items:center;padding:18px 20px;background:var(--card);border-bottom:1px solid var(--border);}
+.step-item{display:flex;flex-direction:column;align-items:center;flex:1;}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;border:2px solid var(--border);color:var(--muted);transition:.3s;}
+.step-circle.done{background:var(--g2);border-color:var(--g2);color:#fff;}
+.step-circle.active{background:transparent;border-color:var(--neon);color:var(--neon);}
+.step-label{font-size:9px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.3px;}
+.step-label.active{color:var(--neon);}
+.step-line{flex:1;height:2px;background:var(--border);margin:0 6px;margin-bottom:14px;transition:.3s;}
+.step-line.done{background:var(--g2);}
+
+.form-section{padding:20px;}
+.form-title{font-size:16px;font-weight:800;color:var(--neon);margin-bottom:16px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;}
+.form-input{
+  width:100%;background:var(--card);border:1.5px solid var(--border);color:var(--text);
+  border-radius:var(--radius-sm);padding:13px 14px;font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:.2s;-webkit-appearance:none;
+}
+.form-input:focus{border-color:var(--neon);background:var(--card2);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-input-unit{position:relative;}
+.form-input-unit input{padding-right:42px;}
+.unit-label{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);font-weight:600;pointer-events:none;}
+
+/* Stepper numérico com +/- */
+.num-stepper{display:flex;align-items:center;gap:0;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:.2s;}
+.num-stepper:focus-within{border-color:var(--neon);}
+.num-btn{width:48px;height:52px;background:var(--card2);border:none;color:var(--neon);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;user-select:none;-webkit-user-select:none;}
+.num-btn:active{background:var(--dim);}
+.num-input{flex:1;background:transparent;border:none;color:var(--text);font-size:22px;font-weight:700;font-family:'DM Sans',sans-serif;text-align:center;outline:none;padding:0;min-width:0;}
+.num-unit{font-size:12px;color:var(--muted);font-weight:600;padding-right:12px;flex-shrink:0;}
+
+/* Toggle sexo */
+.toggle-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.toggle-btn{padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;font-family:'DM Sans',sans-serif;}
+.toggle-btn.sel{background:rgba(94,203,89,.15);border-color:var(--neon);color:var(--neon);}
+
+/* IMC badge */
+.imc-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:14px;}
+.imc-label{font-size:11px;color:var(--muted);font-weight:600;}
+.imc-val{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--neon);}
+.imc-badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;margin-left:auto;}
+.imc-normal{background:rgba(94,203,89,.15);color:var(--neon);border:1px solid rgba(94,203,89,.3);}
+.imc-sobre{background:rgba(196,132,26,.12);color:#d4901e;border:1px solid rgba(196,132,26,.3);}
+.imc-obeso{background:rgba(192,48,48,.1);color:#e06060;border:1px solid rgba(192,48,48,.3);}
+.imc-baixo{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+
+/* Modo manual/câmera */
+.mode-toggle{display:flex;gap:8px;margin-bottom:16px;}
+.mode-btn{flex:1;padding:11px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;}
+.mode-btn.sel{background:rgba(94,203,89,.15);border-color:var(--neon);color:var(--neon);}
+
+/* Dica */
+.tip-box{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:11px;color:#93c5fd;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+
+/* Câmera */
+.cam-area{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;margin-bottom:14px;border:1px solid var(--border);}
+#mob-video{width:100%;height:100%;object-fit:cover;display:none;}
+.cam-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);}
+.cam-ph-icon{font-size:48px;opacity:.3;}
+.cam-btns{display:flex;gap:8px;}
+.cam-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;}
+.cam-btn.primary{background:var(--g2);border-color:var(--g2);color:#fff;}
+
+/* Botões nav step */
+.step-nav{display:flex;gap:10px;padding:16px 20px;position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);}
+.btn-back{flex:1;padding:14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-next{flex:2;padding:14px;border-radius:var(--radius-sm);border:none;background:var(--neon);color:#09100a;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-next:active{transform:scale(.97);}
+.btn-next:disabled{background:var(--border);color:var(--muted);}
+
+/* ── RESULTADO ── */
+.result-header{padding:20px;background:linear-gradient(135deg,#0d1f0e,#162718);}
+.result-tag{font-size:10px;color:var(--neon);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.result-title{font-size:22px;font-weight:800;margin-bottom:4px;}
+.result-sub{font-size:12px;color:var(--muted);}
+
+/* Sem calibragem */
+.no-calib{background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.3);border-radius:var(--radius-sm);padding:14px;margin:0 20px 16px;font-size:12px;color:#e06060;line-height:1.6;}
+.no-calib strong{display:block;margin-bottom:4px;}
+
+/* Cards de resultado */
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:0 20px 12px;display:flex;gap:14px;align-items:flex-start;}
+.rc-icon{font-size:32px;flex-shrink:0;margin-top:2px;}
+.rc-body{flex:1;}
+.rc-cat{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px;}
+.rc-size{font-size:42px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--neon);line-height:1;}
+.rc-alt{font-size:11px;color:var(--muted);margin-top:2px;}
+.rc-conf-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.rc-conf-label{font-size:10px;color:var(--muted);}
+.rc-conf-val{font-size:11px;font-weight:700;color:var(--neon);}
+.conf-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.conf-bar-f{height:100%;background:linear-gradient(90deg,var(--g),var(--neon));border-radius:3px;transition:width .6s;}
+.rc-fonte{font-size:9px;margin-top:5px;font-weight:700;}
+.fonte-real{color:var(--neon);}
+.fonte-est{color:var(--warn);}
+
+/* Biotipo badge */
+.bio-badge{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;margin:0 20px 12px;}
+
+/* Comparação corporal */
+.comp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:0 20px 12px;}
+.comp-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;}
+.comp-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;}
+.comp-label{color:var(--muted);width:60px;flex-shrink:0;}
+.comp-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.comp-bar-f{height:100%;border-radius:3px;transition:width .6s;}
+.comp-bar-ok{background:var(--neon);}
+.comp-bar-warn{background:#d4901e;}
+.comp-bar-danger{background:#e06060;}
+.comp-val{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text);min-width:50px;text-align:right;}
+
+/* Ajuste fino */
+.ajuste-section{padding:0 20px 12px;}
+.ajuste-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;}
+.ajuste-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.aj-btn{padding:12px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;font-family:'DM Sans',sans-serif;}
+.aj-btn.apertada{border-color:rgba(192,48,48,.4);color:#e06060;}
+.aj-btn.boa{border-color:rgba(94,203,89,.4);color:var(--neon);}
+.aj-btn.larga{border-color:rgba(196,132,26,.4);color:#d4901e;}
+.aj-btn.sel{opacity:1;}
+.aj-btn.sel-apertada{background:rgba(192,48,48,.15);border-color:#e06060;color:#e06060;}
+.aj-btn.sel-boa{background:rgba(94,203,89,.15);border-color:var(--neon);color:var(--neon);}
+.aj-btn.sel-larga{background:rgba(196,132,26,.12);border-color:#d4901e;color:#d4901e;}
+
+/* Botões salvar */
+.result-actions{display:flex;gap:10px;padding:0 20px 20px;}
+.btn-save{flex:2;padding:15px;border-radius:var(--radius-sm);border:none;background:var(--neon);color:#09100a;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-new{flex:1;padding:15px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.save-log{margin:0 20px 12px;font-size:10px;color:var(--neon);font-family:'JetBrains Mono',monospace;}
+
+/* ── HISTÓRICO ── */
+.hist-header{padding:16px 20px;display:flex;align-items:center;gap:10px;}
+.search-box{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
+.search-box::placeholder{color:var(--muted);}
+.filter-btn{padding:11px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;font-size:14px;}
+
+.tab-row{display:flex;border-bottom:1px solid var(--border);padding:0 20px;gap:0;}
+.tab-item{padding:11px 16px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.18s;}
+.tab-item.active{color:var(--neon);border-bottom-color:var(--neon);}
+
+.hist-list{padding:12px 20px;}
+.hist-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;margin-bottom:8px;cursor:pointer;transition:.18s;}
+.hist-item:active{background:var(--card2);}
+.hi-av{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;}
+.hi-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.hi-meta{font-size:10px;color:var(--muted);}
+.hi-right{margin-left:auto;text-align:right;}
+.hi-tam{font-size:14px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--neon);}
+.hi-conf{font-size:10px;color:var(--muted);}
+
+/* ── MENU LATERAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;opacity:0;transition:opacity .25s;}
+.overlay.show{display:block;opacity:1;}
+.drawer{
+  position:fixed;top:0;left:-280px;bottom:0;width:280px;
+  background:var(--card);border-right:1px solid var(--border);
+  z-index:201;transition:left .28s cubic-bezier(.25,.46,.45,.94);
+  display:flex;flex-direction:column;overflow-y:auto;
+  padding-top:env(safe-area-inset-top);
+}
+.drawer.open{left:0;}
+.drawer-header{display:flex;justify-content:space-between;align-items:center;padding:20px 18px 14px;}
+.drawer-title{font-size:14px;font-weight:800;color:var(--text);}
+.drawer-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;}
+.drawer-user{display:flex;align-items:center;gap:12px;padding:14px 18px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:8px;}
+.du-av{width:46px;height:46px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;}
+.du-name{font-size:14px;font-weight:800;}
+.du-role{font-size:11px;color:var(--muted);}
+.du-status{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--neon);font-weight:700;margin-top:2px;}
+.drawer-nav{flex:1;padding:0 10px;}
+.dn-item{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:.18s;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:2px;}
+.dn-item:hover,.dn-item.active{background:rgba(94,203,89,.08);color:var(--neon);}
+.dn-item.danger{color:var(--danger);}
+.dn-item.danger:hover{background:rgba(192,48,48,.08);}
+.drawer-footer{padding:16px 18px;border-top:1px solid var(--border);}
+.df-brand{font-size:11px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.df-brand span{color:var(--neon);}
+.df-sub{font-size:9px;color:var(--muted);}
+.df-ver{font-size:9px;color:var(--dim);margin-top:3px;}
+
+/* ── UTEIS ── */
+.empty-state{padding:40px 20px;text-align:center;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3;}
+.empty-text{font-size:13px;}
+.loading-row{padding:20px;text-align:center;color:var(--muted);font-size:12px;}
+.console-log{margin:0 20px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:10px;color:var(--neon);font-family:'JetBrains Mono',monospace;max-height:70px;overflow-y:auto;display:none;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="menu-btn" onclick="toggleDrawer()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="tb-logo">SMARTFIT <span>IA</span></div>
+  </div>
+  <div class="tb-right">
+    <div class="conn-dot" id="connDot"></div>
+    <button class="notif-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="notif-dot"></div>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN AREA -->
+<div class="screen-area" id="screenArea">
+
+  <!-- ===== DASHBOARD ===== -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header">
+      <div class="dash-greeting">BEM-VINDO,</div>
+      <div class="dash-name" id="mobNome">Admin</div>
+      <div class="dash-sub">Sistema inteligente de medição<br>corporal e gestão de uniformes</div>
+      <div class="status-pill"><div class="conn-dot online" style="width:6px;height:6px"></div><span id="statusTxt">Online</span></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" id="dLevant">0</div>
+        <div class="stat-sub">Levantamentos</div>
+        <div class="stat-today" id="dHoje">Hoje: 0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="dUsers" style="color:var(--light)">0</div>
+        <div class="stat-sub">Usuários Ativos</div>
+        <div class="stat-today" id="dUnifor">Uniformes: 0</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Status do Sistema</div>
+      </div>
+      <div class="cal-status">
+        <div class="cal-row"><span class="cal-key">API SmartFit</span><span class="cal-val ok" id="dApi">Verificando...</span></div>
+        <div class="cal-row"><span class="cal-key">Calibragens</span><span class="cal-val" id="dCal">0 entradas</span></div>
+        <div class="cal-row"><span class="cal-key">Motor IA</span><span class="cal-val ok">V15 Ativo</span></div>
+        <div class="cal-row"><span class="cal-key">Última Sinc.</span><span class="cal-val" id="dSync" style="color:var(--muted)">—</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Levantamentos Recentes</div>
+        <div class="section-link" onclick="navTo('historico')">Ver todos</div>
+      </div>
+      <div id="recentList"><div class="loading-row">🔄 Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- ===== NOVO LEVANTAMENTO ===== -->
+  <div class="page" id="page-levantamento">
+    <!-- Stepper -->
+    <div class="stepper" id="stepperEl">
+      <div class="step-item">
+        <div class="step-circle active" id="sc0">1</div>
+        <div class="step-label active" id="sl0">Dados</div>
+      </div>
+      <div class="step-line" id="sline0"></div>
+      <div class="step-item">
+        <div class="step-circle" id="sc1">2</div>
+        <div class="step-label" id="sl1">Medidas</div>
+      </div>
+      <div class="step-line" id="sline1"></div>
+      <div class="step-item">
+        <div class="step-circle" id="sc2">3</div>
+        <div class="step-label" id="sl2">Resultado</div>
+      </div>
+    </div>
+
+    <!-- ETAPA 1: Dados Pessoais -->
+    <div id="step1" class="form-section">
+      <div class="form-title">Dados Pessoais</div>
+      <div class="form-group">
+        <label class="form-label">Nome Completo</label>
+        <input class="form-input" id="mNome" placeholder="Ex: João da Silva" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de Nascimento</label>
+        <input class="form-input" id="mDtNasc" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo</label>
+        <div class="toggle-group">
+          <button class="toggle-btn sel" id="sexoM" onclick="setSexo('M')">Masculino</button>
+          <button class="toggle-btn" id="sexoF" onclick="setSexo('F')">Feminino</button>
+        </div>
+      </div>
+      <div class="form-title" style="margin-top:20px">Informações Corporais</div>
+      <div class="form-group">
+        <label class="form-label">Altura</label>
+        <div class="num-stepper">
+          <button class="num-btn" ontouchstart="startStep('mAlt',-1)" ontouchend="stopStep()" onmousedown="startStep('mAlt',-1)" onmouseup="stopStep()" onmouseleave="stopStep()">−</button>
+          <input class="num-input" id="mAlt" type="number" placeholder="170" inputmode="numeric" min="100" max="230" oninput="calcImcLive()">
+          <span class="num-unit">cm</span>
+          <button class="num-btn" ontouchstart="startStep('mAlt',1)" ontouchend="stopStep()" onmousedown="startStep('mAlt',1)" onmouseup="stopStep()" onmouseleave="stopStep()">+</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Peso</label>
+        <div class="num-stepper">
+          <button class="num-btn" ontouchstart="startStep('mPes',-0.5)" ontouchend="stopStep()" onmousedown="startStep('mPes',-0.5)" onmouseup="stopStep()" onmouseleave="stopStep()">−</button>
+          <input class="num-input" id="mPes" type="number" placeholder="77" inputmode="decimal" min="30" max="300" step="0.5" oninput="calcImcLive()">
+          <span class="num-unit">kg</span>
+          <button class="num-btn" ontouchstart="startStep('mPes',0.5)" ontouchend="stopStep()" onmousedown="startStep('mPes',0.5)" onmouseup="stopStep()" onmouseleave="stopStep()">+</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Biotipo</label>
+        <select class="form-input" id="mBio">
+          <option value="">Detectar automaticamente</option>
+          <option value="magro">Magro</option>
+          <option value="proporcional">Médio / Proporcional</option>
+          <option value="atletico">Atlético / Musculoso</option>
+          <option value="robusto">Robusto / Forte</option>
+          <option value="plussize">Plus Size</option>
+        </select>
+      </div>
+      <div class="imc-row" id="imcRow" style="display:none">
+        <div>
+          <div class="imc-label">IMC (Calculado)</div>
+          <div class="imc-val" id="imcVal">—</div>
+        </div>
+        <div class="imc-badge" id="imcBadge"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fornecedor / Uniforme</label>
+        <select class="form-input" id="mForn">
+          <option value="">Não especificado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferência de Caimento</label>
+        <select class="form-input" id="mPref">
+          <option value="padrao">Padrão</option>
+          <option value="justo">Justo (mais fechado)</option>
+          <option value="largo">Largo (mais folgado)</option>
+        </select>
+      </div>
+    </div>
+    <div class="step-nav" id="nav1">
+      <button class="btn-next" style="flex:1" onclick="goStep(2)">Próximo →</button>
+    </div>
+
+    <!-- ETAPA 2: Medidas Corporais -->
+    <div id="step2" style="display:none">
+      <div class="form-section" style="padding-bottom:8px">
+        <div class="form-title">Medidas Corporais</div>
+        <div class="mode-toggle">
+          <button class="mode-btn sel" id="modeManual" onclick="setMode('manual')">✏️ Manual</button>
+          <button class="mode-btn" id="modeCam" onclick="setMode('cam')">📷 Câmera</button>
+        </div>
+        <div id="manualFields">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Ombro</label><div class="form-input-unit"><input class="form-input" id="mOmb" type="number" placeholder="45" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+            <div class="form-group"><label class="form-label">Tórax</label><div class="form-input-unit"><input class="form-input" id="mTor" type="number" placeholder="104" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Cintura</label><div class="form-input-unit"><input class="form-input" id="mCin" type="number" placeholder="82" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+            <div class="form-group"><label class="form-label">Quadril</label><div class="form-input-unit"><input class="form-input" id="mQua" type="number" placeholder="104" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Comp. Braço</label><div class="form-input-unit"><input class="form-input" id="mManga" type="number" placeholder="62" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+            <div class="form-group"><label class="form-label">Entrepernas</label><div class="form-input-unit"><input class="form-input" id="mEntre" type="number" placeholder="80" inputmode="decimal"><span class="unit-label">cm</span></div></div>
+          </div>
+        </div>
+        <div id="camFields" style="display:none">
+          <div class="cam-area">
+            <video id="mobVideo" autoplay playsinline muted></video>
+            <div class="cam-ph" id="camPh">
+              <div class="cam-ph-icon">📷</div>
+              <div style="font-size:12px;color:var(--muted)">Câmera inativa</div>
+            </div>
+          </div>
+          <div class="cam-btns">
+            <label class="cam-btn"><input type="file" id="mobFotoInput" accept="image/*" style="display:none" onchange="carregarFotoMob(event)">📁 Foto</label>
+            <button class="cam-btn primary" onclick="abrirCamMob()">📷 Abrir Câmera</button>
+            <button class="cam-btn" onclick="fecharCamMob()">✕ Fechar</button>
+          </div>
+          <div class="tip-box" style="margin-top:12px">
+            <span>💡</span>
+            <span>Para medidas mais precisas, utilize o modo câmera. Fique de frente com braços ao lado do corpo.</span>
+          </div>
+        </div>
+      </div>
+      <div class="step-nav">
+        <button class="btn-back" onclick="goStep(1)">Voltar</button>
+        <button class="btn-next" onclick="goStep(3)">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 3: Resultado -->
+    <div id="step3" style="display:none">
+      <div class="result-header">
+        <div class="result-tag">RECOMENDAÇÃO IA</div>
+        <div class="result-title">Resultado da Análise</div>
+        <div class="result-sub">Baseado na análise corporal e calibragem de uniformes</div>
+      </div>
+      <!-- Aviso sem calibragem -->
+      <div id="mobSemCalib" style="display:none;padding:12px 20px 0">
+        <div class="no-calib">
+          <strong>⚠️ Necessário calibragem do uniforme</strong>
+          Cadastre medidas reais na aba Calibragem no sistema Desktop para recomendação assertiva. Resultado atual é apenas estimativa.
+        </div>
+      </div>
+      <!-- Biotipo -->
+      <div style="padding:12px 20px 0">
+        <div class="bio-badge" id="bioBadge" style="display:none"></div>
+      </div>
+      <!-- Cards resultado -->
+      <div id="mobResultCards"></div>
+      <!-- Comparação corporal -->
+      <div class="comp-card" id="mobCompCard" style="display:none">
+        <div class="comp-title">📏 Comparação Corpo × Roupa</div>
+        <div id="mobCompRows"></div>
+      </div>
+      <!-- Ajuste fino -->
+      <div class="ajuste-section">
+        <div class="ajuste-title">🎯 A roupa ficou:</div>
+        <div class="ajuste-btns">
+          <button class="aj-btn apertada" onclick="mobAjuste('apertada',this)">😤 Apertada</button>
+          <button class="aj-btn boa" onclick="mobAjuste('boa',this)">👍 Boa</button>
+          <button class="aj-btn larga" onclick="mobAjuste('larga',this)">😌 Larga</button>
+        </div>
+      </div>
+      <div class="console-log" id="mobSaveLog"></div>
+      <div class="result-actions">
+        <button class="btn-save" onclick="mobSalvar()">💾 Salvar</button>
+        <button class="btn-new" onclick="novoLevantamento()">Novo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HISTÓRICO ===== -->
+  <div class="page" id="page-historico">
+    <div class="hist-header">
+      <input class="search-box" id="histSearch" placeholder="Buscar por nome..." oninput="filtrarHist()">
+      <button class="filter-btn" onclick="carregarHistMob()">↻</button>
+    </div>
+    <div class="tab-row">
+      <div class="tab-item active" onclick="setHistTab('todos',this)">Todos</div>
+      <div class="tab-item" onclick="setHistTab('concluidos',this)">Concluídos</div>
+      <div class="tab-item" onclick="setHistTab('pendentes',this)">Pendentes</div>
+    </div>
+    <div class="hist-list" id="histList"><div class="loading-row">🔄 Buscando...</div></div>
+  </div>
+
+  <!-- ===== MAIS ===== -->
+  <div class="page" id="page-mais">
+    <div class="form-section">
+      <div class="form-title">Mais opções</div>
+      <div class="cal-status">
+        <div class="cal-row" style="cursor:pointer" onclick="navTo('levantamento')"><span class="cal-key">➕ Novo Levantamento</span><span>›</span></div>
+        <div class="cal-row" style="cursor:pointer" onclick="navTo('historico')"><span class="cal-key">📋 Histórico</span><span>›</span></div>
+        <div class="cal-row" style="cursor:pointer" onclick="abrirDesktop()"><span class="cal-key">🖥️ Abrir Versão Desktop</span><span>›</span></div>
+        <div class="cal-row" style="cursor:pointer" onclick="testarConexaoMob()"><span class="cal-key">🔌 Testar Conexão API</span><span>›</span></div>
+      </div>
+      <div class="form-title" style="margin-top:20px">Sistema</div>
+      <div class="cal-status">
+        <div class="cal-row"><span class="cal-key">Versão</span><span class="cal-val ok">V15.0 Mobile</span></div>
+        <div class="cal-row"><span class="cal-key">Calibragens</span><span class="cal-val" id="moreCalib">0</span></div>
+        <div class="cal-row"><span class="cal-key">Motor IA</span><span class="cal-val ok">Ativo</span></div>
+        <div class="cal-row"><span class="cal-key">Câmera</span><span class="cal-val" id="moreCam">—</span></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screen-area -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-dashboard" onclick="navTo('dashboard')">
+    <div class="nav-icon">🏠</div>
+    <div class="nav-label">Dashboard</div>
+  </div>
+  <div class="nav-item" id="nav-levantamento" onclick="navTo('levantamento')">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">Levantamento</div>
+  </div>
+  <div class="nav-fab" onclick="navTo('levantamento')">+</div>
+  <div class="nav-item" id="nav-historico" onclick="navTo('historico')">
+    <div class="nav-icon">🕐</div>
+    <div class="nav-label">Histórico</div>
+  </div>
+  <div class="nav-item" id="nav-mais" onclick="navTo('mais')">
+    <div class="nav-icon">···</div>
+    <div class="nav-label">Mais</div>
+  </div>
+</div>
+
+<!-- DRAWER MENU -->
+<div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Menu</div>
+    <button class="drawer-close" onclick="toggleDrawer()">✕</button>
+  </div>
+  <div class="drawer-user">
+    <div class="du-av" id="drawerAv">A</div>
+    <div>
+      <div class="du-name" id="drawerNome">Admin</div>
+      <div class="du-role">Administrador</div>
+      <div class="du-status"><div class="conn-dot online" style="width:6px;height:6px"></div> Online</div>
+    </div>
+  </div>
+  <div class="drawer-nav">
+    <div class="dn-item active" onclick="navTo('dashboard');toggleDrawer()">🏠 Dashboard</div>
+    <div class="dn-item" onclick="navTo('levantamento');toggleDrawer()">➕ Novo Levantamento</div>
+    <div class="dn-item" onclick="navTo('historico');toggleDrawer()">📋 Histórico</div>
+    <div class="dn-item" onclick="abrirDesktop();toggleDrawer()">🖥️ Versão Desktop</div>
+    <div class="dn-item" onclick="testarConexaoMob();toggleDrawer()">🔌 Testar API</div>
+    <div class="dn-item danger" onclick="toggleDrawer()">⏻ Sair</div>
+  </div>
+  <div class="drawer-footer">
+    <div class="df-brand">SMARTFIT <span>IA</span></div>
+    <div class="df-sub">Sistema inteligente de medição<br>corporal e gestão de uniformes</div>
+    <div class="df-ver">Versão 15.0 Mobile</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+var API_URL = localStorage.getItem('sf_url') ||
+  'https://script.google.com/macros/s/AKfycbwCJipeegUsEF9WEJBV9XkGkG7-UhtHDTuKOr2-TH6x7M_SGBJp3cNwn71oVK0_LsQy/exec';
+var DESKTOP_URL = localStorage.getItem('sf_desktop') || '../index.html';
+
+// ============================================================
+// MOTOR IA V15 — MESMO DO DESKTOP (calibragem como cérebro)
+// ============================================================
+var POLO = {
+  PP: {torax:[78,85], ombro:[38,41],altura:[148,163],peso:[38,55], cintura:[62,71], imc:[14,20]},
+  P:  {torax:[86,93], ombro:[41,44],altura:[160,170],peso:[52,67], cintura:[71,80], imc:[18,23]},
+  M:  {torax:[94,101],ombro:[44,48],altura:[168,178],peso:[65,79], cintura:[80,90], imc:[21,26]},
+  G:  {torax:[102,109],ombro:[48,51],altura:[172,183],peso:[77,96],cintura:[90,100],imc:[24,30]},
+  GG: {torax:[110,117],ombro:[51,55],altura:[177,189],peso:[93,118],cintura:[100,114],imc:[27,36]},
+  XG: {torax:[118,127],ombro:[55,59],altura:[184,198],peso:[114,142],cintura:[114,128],imc:[33,44]},
+  XGG:{torax:[128,140],ombro:[59,64],altura:[191,210],peso:[138,170],cintura:[128,145],imc:[39,58]}
+};
+var JAQUETA = {
+  PP:{torax:[82,88],ombro:[39,42],cintura:[68,76]},P:{torax:[89,95],ombro:[42,45],cintura:[76,84]},
+  M:{torax:[96,102],ombro:[45,48],cintura:[84,92]},G:{torax:[103,110],ombro:[48,52],cintura:[92,102]},
+  GG:{torax:[111,118],ombro:[52,56],cintura:[102,114]},XG:{torax:[119,128],ombro:[56,60],cintura:[114,126]},
+  XGG:{torax:[129,140],ombro:[60,65],cintura:[126,140]}
+};
+var CALCA = {
+  36:{cintura:[66,71],quadril:[84,89]},38:{cintura:[72,77],quadril:[90,95]},
+  40:{cintura:[78,83],quadril:[96,101]},42:{cintura:[84,89],quadril:[102,107]},
+  44:{cintura:[90,95],quadril:[108,113]},46:{cintura:[96,102],quadril:[114,120]},
+  48:{cintura:[103,110],quadril:[121,128]}
+};
+var SIZES = ['PP','P','M','G','GG','XG','XGG'];
+var PESOS = {ombro:0.25,torax:0.25,cintura:0.20,quadril:0.15,altura:0.10,imc:0.05};
+var FOLGA = {polo:2,camiseta:1,jaqueta:4,operacional:6,calca:2};
+
+function carregarDB(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
+function salvarDB(k,v){localStorage.setItem(k,JSON.stringify(v));}
+var calibDB  = carregarDB('sf_calibragem',{});
+var trocasDB = carregarDB('sf_trocas',[]);
+var diagDB   = carregarDB('sf_diags',[]);
+var fornDB   = carregarDB('sf_fornecedores',[]);
+
+function identificarBiotipo(alt,pes,imc,torax,cintura){
+  var imcV=imc||(pes/((alt/100)*(alt/100)));
+  var propTC=(torax&&cintura&&cintura>0)?torax/cintura:null;
+  if(imcV<17.5) return 'magro';
+  if(imcV>=35)  return 'plussize';
+  if(imcV>=30)  return 'robusto';
+  if(propTC){if(propTC>=1.22) return 'atletico';if(propTC>=1.10) return 'proporcional';if(propTC<1.04) return 'robusto';}
+  if(imcV<20.5) return (alt>=165)?'magro':'proporcional';
+  if(imcV<25.5) return (alt>=177)?'atletico':'proporcional';
+  if(imcV<29)   return (alt<170)?'robusto':'atletico';
+  return 'robusto';
+}
+function estimarProporcoes(alt,pes,biotipo){
+  var imc=pes/((alt/100)*(alt/100));
+  var bio=biotipo||identificarBiotipo(alt,pes,imc,0,0);
+  var delta=(imc-22)*1.15;
+  var fBio={
+    magro:{torax:0.520,cintura:0.415,quadril:0.535,ombro:0.248},
+    proporcional:{torax:0.558,cintura:0.448,quadril:0.565,ombro:0.263},
+    atletico:{torax:0.590,cintura:0.440,quadril:0.570,ombro:0.283},
+    robusto:{torax:0.575,cintura:0.530,quadril:0.615,ombro:0.268},
+    plussize:{torax:0.605,cintura:0.592,quadril:0.650,ombro:0.272}
+  }[bio]||{torax:0.558,cintura:0.448,quadril:0.565,ombro:0.263};
+  return {
+    torax:Math.max(78,Math.min(140,Math.round(alt*fBio.torax+delta*1.30))),
+    cintura:Math.max(62,Math.min(145,Math.round(alt*fBio.cintura+delta*1.35))),
+    quadril:Math.max(84,Math.min(145,Math.round(alt*fBio.quadril+delta*0.80))),
+    ombro:Math.max(38,Math.min(64,Math.round(alt*fBio.ombro+delta*0.20))),
+    biotipo:bio
+  };
+}
+function scoreTabela(tab,m){
+  var best='M',bs=9999;
+  for(var t in tab){
+    var r=tab[t],s=0,n=0;
+    if(m.torax>0&&r.torax){s+=Math.abs(m.torax-(r.torax[0]+r.torax[1])/2)*3.5;n++;}
+    if(m.cintura>0&&r.cintura){s+=Math.abs(m.cintura-(r.cintura[0]+r.cintura[1])/2)*3.0;n++;}
+    if(m.imc>0&&r.imc){s+=Math.abs(m.imc-(r.imc[0]+r.imc[1])/2)*2.2;n++;}
+    if(m.peso>0&&r.peso){s+=Math.abs(m.peso-(r.peso[0]+r.peso[1])/2)*0.6;n++;}
+    if(m.ombro>0&&r.ombro){s+=Math.abs(m.ombro-(r.ombro[0]+r.ombro[1])/2)*1.5;n++;}
+    if(n>0) s=s/n;
+    if(s<bs){bs=s;best=t;}
+  }
+  return {t:best,score:bs};
+}
+function calcCalca(m){
+  var cin=m.cintura>0?m.cintura:(m.altura&&m.peso?Math.max(62,Math.min(145,Math.round(m.altura*0.448+(m.peso/((m.altura/100)*(m.altura/100))-22)*1.35))):80);
+  var best='40',bs=9999;
+  for(var t in CALCA){var r=CALCA[t],s=Math.abs(cin-(r.cintura[0]+r.cintura[1])/2)*3;if(m.quadril>0)s+=Math.abs(m.quadril-(r.quadril[0]+r.quadril[1])/2)*1.5;if(s<bs){bs=s;best=t;}}
+  return best;
+}
+function calcCalcado(alt){
+  if(!alt)return '-';
+  if(alt>=194)return '45';if(alt>=190)return '44';if(alt>=185)return '43';
+  if(alt>=179)return '42';if(alt>=173)return '41';if(alt>=167)return '40';return '39';
+}
+function compararCorpoRoupa(corpo,medRoupa,tipoUnif){
+  var folga=FOLGA[tipoUnif]||2,msgs=[],scores=[];
+  var campos=[{k:'ombro',label:'Ombro',peso:PESOS.ombro},{k:'torax',label:'Tórax',peso:PESOS.torax},{k:'cintura',label:'Cintura',peso:PESOS.cintura},{k:'quadril',label:'Quadril',peso:PESOS.quadril}];
+  campos.forEach(function(c){
+    var vC=corpo[c.k],vR=medRoupa[c.k]||medRoupa['peito']||0;
+    if(c.k==='torax'&&!vR)vR=medRoupa['peito']||0;
+    if(!vC||!vR)return;
+    var diff=vC-(vR+folga);
+    scores.push({campo:c.k,diff:diff,peso:c.peso,label:c.label});
+    if(diff>3)msgs.push(c.label+' apertado (+'+diff.toFixed(0)+'cm)');
+    else if(diff>0)msgs.push(c.label+' justo');
+    else if(diff<-8)msgs.push(c.label+' folgado');
+  });
+  var sp=0,tp=0;
+  scores.forEach(function(s){sp+=s.diff*s.peso;tp+=s.peso;});
+  return{score:tp>0?sp/tp:0,msgs:msgs,scores:scores,qtdCampos:scores.length};
+}
+function consultarCalibragem(corpo,fornNome,tipoUnif){
+  var chaves=Object.keys(calibDB);
+  if(!chaves.length)return null;
+  if(fornNome){var cf=chaves.filter(function(k){return k.toLowerCase().indexOf(fornNome.toLowerCase())>=0;});if(cf.length)chaves=cf;}
+  var resultados=[];
+  chaves.forEach(function(chave){
+    var partes=chave.split('__'),tam=partes[1];
+    if(!tam)return;
+    var comp=compararCorpoRoupa(corpo,calibDB[chave],tipoUnif||'polo');
+    resultados.push({tam:tam,chave:chave,score:comp.score,msgs:comp.msgs,scores:comp.scores,qtd:comp.qtdCampos});
+  });
+  if(!resultados.length)return null;
+  resultados.sort(function(a,b){return Math.abs(a.score)-Math.abs(b.score);});
+  var melhor=resultados[0];
+  var idx=SIZES.indexOf(melhor.tam),tamFinal=melhor.tam,altTam='';
+  if(melhor.score>2&&idx<SIZES.length-1){tamFinal=SIZES[idx+1];altTam=melhor.tam+'/'+tamFinal;}
+  else if(melhor.score<-6&&idx>0){tamFinal=SIZES[idx-1];altTam=tamFinal+'/'+melhor.tam;}
+  else{altTam=idx>0?SIZES[idx-1]+'/'+melhor.tam:melhor.tam+'/'+(SIZES[idx+1]||melhor.tam);}
+  var conf=Math.min(97,60+melhor.qtd*9);
+  return{tam:tamFinal,alt:altTam,conf:conf,score:melhor.score,msgs:melhor.msgs.join(' | ')||'Ajuste preciso.',scores:melhor.scores,fonte:'CALIBRAGEM REAL'};
+}
+function calcHibridoMob(m,opts){
+  opts=opts||{};
+  m.imc=(m.altura>0&&m.peso>0)?m.peso/((m.altura/100)*(m.altura/100)):0;
+  var bio=opts.bio||identificarBiotipo(m.altura,m.peso,m.imc,m.torax,m.cintura);
+  var est=estimarProporcoes(m.altura,m.peso,bio);
+  var corpo={altura:m.altura,peso:m.peso,imc:m.imc,
+    torax:m.torax>0?m.torax:est.torax,ombro:m.ombro>0?m.ombro:est.ombro,
+    cintura:m.cintura>0?m.cintura:est.cintura,quadril:m.quadril>0?m.quadril:est.quadril};
+  var temReais=(m.torax>0||m.cintura>0||m.ombro>0);
+  var resCal=consultarCalibragem(corpo,opts.forn,'polo');
+  var tamFinal,altTam,conf,fonte,msgCal,scoresComp=[];
+  if(resCal){
+    tamFinal=resCal.tam;altTam=resCal.alt;conf=resCal.conf;
+    fonte='CALIBRAGEM REAL';msgCal=resCal.msgs;scoresComp=resCal.scores||[];
+  } else {
+    var base=scoreTabela(POLO,corpo);
+    var r=POLO[base.t];
+    var noLim=(corpo.torax>=0&&r.torax&&corpo.torax>=r.torax[1]-2)||(corpo.cintura>=0&&r.cintura&&corpo.cintura>=r.cintura[1]-2);
+    var fatorBio=(bio==='atletico'||bio==='robusto')&&noLim?1:bio==='plussize'?1:0;
+    var idx=SIZES.indexOf(base.t);
+    var idxAj=Math.min(SIZES.length-1,idx+fatorBio);
+    tamFinal=SIZES[idxAj];
+    altTam=idx>0?SIZES[idx-1]+'/'+tamFinal:tamFinal+'/'+(SIZES[idx+1]||tamFinal);
+    conf=Math.min(62,Math.max(45,Math.round(96-base.score*0.8)));
+    fonte='ESTIMATIVA';msgCal='Sem calibragem cadastrada.';
+  }
+  if(opts.pref&&opts.pref!=='padrao'){var pidx=SIZES.indexOf(tamFinal);if(opts.pref==='justo'&&pidx>0)tamFinal=SIZES[pidx-1];else if(opts.pref==='largo'&&pidx<SIZES.length-1)tamFinal=SIZES[pidx+1];}
+  // Ajuste historico
+  var similares=trocasDB.filter(function(t){return t.alt&&t.pes&&Math.abs(t.alt-m.altura)<=5&&Math.abs(t.pes-m.peso)<=8;});
+  var delta=0;similares.forEach(function(t){if(t.motivo==='apertado')delta++;else if(t.motivo==='folgado')delta--;});
+  if(similares.length&&delta!==0){delta=Math.round(delta/similares.length);var hi=SIZES.indexOf(tamFinal);tamFinal=SIZES[Math.max(0,Math.min(SIZES.length-1,hi+delta))];}
+  if(temReais)conf=Math.min(97,conf+6);
+  var jaqueta=scoreTabela(JAQUETA,corpo).t;
+  var obsBio={magro:'🦴 Magro',proporcional:'✅ Proporcional',atletico:'💪 Atlético',robusto:'🏋️ Robusto',plussize:'📐 Plus Size'}[bio]||'';
+  return{tam:tamFinal,tamJaqueta:jaqueta,altTam:altTam,conf:conf,fonte:fonte,msgCal:msgCal,
+    calca:calcCalca(corpo),calcado:calcCalcado(m.altura),
+    bio:bio,obsBio:obsBio,semCalib:!resCal,scoresComp:scoresComp,corpo:corpo};
+}
+
+// ============================================================
+// ESTADO DO APP
+// ============================================================
+var mobSexo='M', mobMode='manual', mobCamStream=null;
+var mobResultado=null, mobAjusteVal=null, mobStep=1;
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function navTo(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  var ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
+  document.getElementById('screenArea').scrollTop=0;
+  if(id==='historico')carregarHistMob();
+  if(id==='dashboard')atuDash();
+  if(id==='levantamento'&&mobStep===1){/* ok */}
+  if(id==='mais')atuMais();
+}
+function toggleDrawer(){
+  var d=document.getElementById('drawer'),o=document.getElementById('overlay');
+  var open=d.classList.contains('open');
+  if(open){d.classList.remove('open');o.classList.remove('show');}
+  else{d.classList.add('open');o.classList.add('show');}
+}
+function abrirDesktop(){window.open(DESKTOP_URL,'_blank');}
+
+// ============================================================
+// STEP NAVIGATION
+// ============================================================
+function goStep(n){
+  if(n===2&&!validarStep1())return;
+  if(n===3){calcularMob();return;}
+  mobStep=n;
+  document.getElementById('step1').style.display=n===1?'block':'none';
+  document.getElementById('step2').style.display=n===2?'block':'none';
+  document.getElementById('step3').style.display=n===3?'block':'none';
+  document.getElementById('nav1').style.display=n===1?'flex':'none';
+  atuStepper(n);
+  document.getElementById('screenArea').scrollTop=0;
+}
+function atuStepper(n){
+  for(var i=0;i<3;i++){
+    var sc=document.getElementById('sc'+i),sl=document.getElementById('sl'+i);
+    if(i<n-1){sc.className='step-circle done';sc.textContent='✓';}
+    else if(i===n-1){sc.className='step-circle active';sc.textContent=i+1;sl.className='step-label active';}
+    else{sc.className='step-circle';sc.textContent=i+1;sl.className='step-label';}
+    if(i<3){var line=document.getElementById('sline'+i);if(line)line.className='step-line'+(i<n-1?' done':'');}
+  }
+}
+
+// ============================================================
+// STEP 1 — DADOS
+// ============================================================
+// Stepper numérico com pressão contínua
+var stepInterval=null;
+function startStep(id,delta){
+  applyStep(id,delta);
+  stepInterval=setInterval(function(){applyStep(id,delta);},150);
+}
+function stopStep(){
+  clearInterval(stepInterval);stepInterval=null;
+}
+function applyStep(id,delta){
+  var el=document.getElementById(id);
+  var val=parseFloat(el.value)||0;
+  var min=parseFloat(el.min)||0;
+  var max=parseFloat(el.max)||9999;
+  var step=parseFloat(el.step)||1;
+  val=Math.round((val+delta)*100)/100;
+  if(val<min)val=min;
+  if(val>max)val=max;
+  el.value=val;
+  calcImcLive();
+}
+
+function setSexo(s){
+  mobSexo=s;
+  document.getElementById('sexoM').className='toggle-btn'+(s==='M'?' sel':'');
+  document.getElementById('sexoF').className='toggle-btn'+(s==='F'?' sel':'');
+}
+function calcImcLive(){
+  var alt=parseFloat(document.getElementById('mAlt').value)||0;
+  var pes=parseFloat(document.getElementById('mPes').value)||0;
+  // Converter metros para cm
+  if(alt>0&&alt<3){alt=Math.round(alt*100);document.getElementById('mAlt').value=alt;}
+  // Clampear dentro dos limites válidos
+  if(alt>0&&alt<100){document.getElementById('mAlt').value='';alt=0;}
+  if(alt>230){alt=230;document.getElementById('mAlt').value=230;}
+  if(pes>300){pes=300;document.getElementById('mPes').value=300;}
+  var row=document.getElementById('imcRow');
+  if(!alt||!pes||alt<100||pes<20){row.style.display='none';return;}
+  var imc=pes/((alt/100)*(alt/100));
+  row.style.display='flex';
+  document.getElementById('imcVal').textContent=imc.toFixed(1);
+  var badge=document.getElementById('imcBadge');
+  if(imc<18.5){badge.textContent='Abaixo';badge.className='imc-badge imc-baixo';}
+  else if(imc<25){badge.textContent='Normal';badge.className='imc-badge imc-normal';}
+  else if(imc<30){badge.textContent='Sobrepeso';badge.className='imc-badge imc-sobre';}
+  else{badge.textContent='Obesidade';badge.className='imc-badge imc-obeso';}
+}
+function validarStep1(){
+  var nome=document.getElementById('mNome').value.trim();
+  var alt=parseFloat(document.getElementById('mAlt').value)||0;
+  var pes=parseFloat(document.getElementById('mPes').value)||0;
+  if(alt>0&&alt<3){alt=Math.round(alt*100);document.getElementById('mAlt').value=alt;}
+  if(!nome){alert('Informe o nome do colaborador.');return false;}
+  if(alt<100||alt>230){alert('Altura inválida. Use centímetros (ex: 170).');return false;}
+  if(pes<20||pes>300){alert('Peso inválido.');return false;}
+  return true;
+}
+
+// ============================================================
+// STEP 2 — MEDIDAS / CÂMERA
+// ============================================================
+function setMode(m){
+  mobMode=m;
+  document.getElementById('modeManual').className='mode-btn'+(m==='manual'?' sel':'');
+  document.getElementById('modeCam').className='mode-btn'+(m==='cam'?' sel':'');
+  document.getElementById('manualFields').style.display=m==='manual'?'block':'none';
+  document.getElementById('camFields').style.display=m==='cam'?'block':'none';
+}
+function abrirCamMob(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Câmera não suportada neste navegador.');return;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})
+  .then(function(s){
+    mobCamStream=s;var v=document.getElementById('mobVideo');
+    v.srcObject=s;v.style.display='block';
+    document.getElementById('camPh').style.display='none';
+  }).catch(function(e){alert('Câmera: '+e.message);});
+}
+function fecharCamMob(){
+  if(mobCamStream){mobCamStream.getTracks().forEach(function(t){t.stop();});mobCamStream=null;}
+  var v=document.getElementById('mobVideo');v.srcObject=null;v.style.display='none';
+  document.getElementById('camPh').style.display='flex';
+}
+function carregarFotoMob(e){
+  var f=e.target.files[0];if(!f)return;
+  fecharCamMob();
+  var v=document.getElementById('mobVideo');
+  var url=URL.createObjectURL(f);
+  // Mostra a foto no lugar do video (usando img temporaria)
+  document.getElementById('camPh').style.display='none';
+  var img=document.createElement('img');
+  img.src=url;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+  var ca=document.querySelector('.cam-area');
+  var old=ca.querySelector('img');if(old)ca.removeChild(old);
+  ca.appendChild(img);
+}
+
+// ============================================================
+// CALCULAR — MOTOR IA
+// ============================================================
+function calcularMob(){
+  var alt=parseFloat(document.getElementById('mAlt').value)||0;
+  var pes=parseFloat(document.getElementById('mPes').value)||0;
+  if(alt>0&&alt<3)alt=Math.round(alt*100);
+  var tor=parseFloat(document.getElementById('mTor').value)||0;
+  var cin=parseFloat(document.getElementById('mCin').value)||0;
+  var qua=parseFloat(document.getElementById('mQua').value)||0;
+  var omb=parseFloat(document.getElementById('mOmb').value)||0;
+  var bio=document.getElementById('mBio').value||'';
+  var forn=document.getElementById('mForn').value||'';
+  var pref=document.getElementById('mPref').value||'padrao';
+  var res=calcHibridoMob({altura:alt,peso:pes,torax:tor,cintura:cin,quadril:qua,ombro:omb},{bio:bio,forn:forn,pref:pref,temFoto:mobMode==='cam'});
+  mobResultado=res;
+  mobAjusteVal=null;
+  renderResultado(res);
+  // Avança para step 3
+  mobStep=3;
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='none';
+  document.getElementById('step3').style.display='block';
+  document.getElementById('nav1').style.display='none';
+  atuStepper(3);
+  document.getElementById('screenArea').scrollTop=0;
+}
+function renderResultado(res){
+  // Sem calibragem
+  document.getElementById('mobSemCalib').style.display=res.semCalib?'block':'none';
+  // Biotipo
+  var bioBadge=document.getElementById('bioBadge');
+  if(res.bio){bioBadge.textContent=res.obsBio+' — '+res.bio;bioBadge.style.display='inline-flex';}
+  else bioBadge.style.display='none';
+  // Cards
+  var cards=[
+    {icon:'👔',cat:'Camiseta Polo',tam:res.semCalib?'?':res.tam,alt:res.altTam,conf:res.conf,fonte:res.fonte},
+    {icon:'👖',cat:'Calça Operacional',tam:res.calca,alt:'',conf:res.conf,fonte:res.fonte},
+    {icon:'🧥',cat:'Jaqueta',tam:res.semCalib?'?':res.tamJaqueta,alt:'',conf:Math.min(res.conf,90),fonte:res.fonte}
+  ];
+  var html=cards.map(function(c){
+    var corFonte=c.fonte==='CALIBRAGEM REAL'?'fonte-real':'fonte-est';
+    var fLabel=c.fonte==='CALIBRAGEM REAL'?'✅ Calibragem Real':'⚠️ Estimativa';
+    return '<div class="result-card">'+
+      '<div class="rc-icon">'+c.icon+'</div>'+
+      '<div class="rc-body">'+
+        '<div class="rc-cat">'+c.cat+'</div>'+
+        '<div class="rc-size">'+c.tam+'</div>'+
+        (c.alt?'<div class="rc-alt">Alternativa: '+c.alt+'</div>':'')+
+        '<div class="rc-conf-row">'+
+          '<div class="rc-conf-label">Confiança:</div>'+
+          '<div class="rc-conf-val">'+c.conf+'%</div>'+
+          '<div class="conf-bar"><div class="conf-bar-f" style="width:'+c.conf+'%"></div></div>'+
+        '</div>'+
+        '<div class="rc-fonte '+corFonte+'">'+fLabel+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('mobResultCards').innerHTML=html;
+  // Comparação corporal
+  if(res.scoresComp&&res.scoresComp.length){
+    var compCard=document.getElementById('mobCompCard');
+    compCard.style.display='block';
+    var compHtml=res.scoresComp.map(function(s){
+      var pct=Math.min(100,Math.max(0,50+s.diff*5));
+      var cls=s.diff>3?'comp-bar-danger':s.diff>0?'comp-bar-warn':'comp-bar-ok';
+      var txt=s.diff>3?'Apertado':s.diff>0?'Justo':'OK';
+      return '<div class="comp-row">'+
+        '<div class="comp-label">'+s.label+'</div>'+
+        '<div class="comp-bar-wrap"><div class="comp-bar-f '+cls+'" style="width:'+pct+'%"></div></div>'+
+        '<div class="comp-val">'+txt+' ('+s.diff.toFixed(0)+'cm)</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('mobCompRows').innerHTML=compHtml;
+  } else {
+    document.getElementById('mobCompCard').style.display='none';
+  }
+  // Log
+  var log=document.getElementById('mobSaveLog');
+  log.style.display='block';
+  log.textContent='Motor: '+res.fonte+' | Bio: '+res.bio+' | Conf: '+res.conf+'%';
+}
+
+// ============================================================
+// AJUSTE FINO
+// ============================================================
+function mobAjuste(v,btn){
+  mobAjusteVal=v;
+  document.querySelectorAll('.aj-btn').forEach(function(b){b.className=b.className.replace(/\s*sel-\w+/,'');});
+  btn.className+=' sel-'+v;
+  if(mobResultado){
+    var reg={ts:new Date().toISOString(),alt:mobResultado.corpo&&mobResultado.corpo.altura,pes:mobResultado.corpo&&mobResultado.corpo.peso,tam:mobResultado.tam,ajuste:v,forn:document.getElementById('mForn').value||''};
+    var ajDB=carregarDB('sf_ajustes',[]);ajDB.push(reg);salvarDB('sf_ajustes',ajDB);
+    // Salvar na planilha
+    apiGET({action:'ajuste_fino',alt:reg.alt,pes:reg.pes,tam:reg.tam,ajuste:v,forn:reg.forn});
+  }
+}
+
+// ============================================================
+// SALVAR LEVANTAMENTO
+// ============================================================
+function mobSalvar(){
+  if(!mobResultado){alert('Calcule primeiro.');return;}
+  var nome=document.getElementById('mNome').value||'Colaborador';
+  var r=mobResultado;
+  var diag={ts:new Date().toISOString(),nome:nome,tam:r.tam,calca:r.calca,conf:r.conf,fonte:r.fonte};
+  diagDB.push(diag);salvarDB('sf_diags',diagDB);
+  var log=document.getElementById('mobSaveLog');
+  log.style.display='block';log.textContent='Salvando...';
+  apiGET({
+    action:'levantamento',nome:nome,
+    alt:r.corpo&&r.corpo.altura,pes:r.corpo&&r.corpo.peso,
+    tor:r.corpo&&r.corpo.torax,cin:r.corpo&&r.corpo.cintura,
+    tamCamisa:r.tam,tamCalca:r.calca,confianca:r.conf,
+    biotipo:r.bio,fonte:r.fonte
+  },function(){log.textContent='✓ Salvo na planilha!';});
+}
+function novoLevantamento(){
+  mobResultado=null;mobAjusteVal=null;
+  document.getElementById('mNome').value='';
+  document.getElementById('mAlt').value='';
+  document.getElementById('mPes').value='';
+  ['mTor','mCin','mQua','mOmb','mManga','mEntre'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('imcRow').style.display='none';
+  fecharCamMob();
+  goStep(1);navTo('levantamento');
+}
+
+// ============================================================
+// HISTÓRICO
+// ============================================================
+var histDados=[],histTab='todos';
+function carregarHistMob(){
+  document.getElementById('histList').innerHTML='<div class="loading-row">🔄 Buscando na planilha...</div>';
+  if(diagDB.length)renderHistMob(diagDB);
+  apiGET({action:'list'},function(data){
+    if(data&&data.linhas&&data.linhas.length){histDados=data.linhas;renderHistMob(histDados);}
+    else if(diagDB.length){histDados=diagDB;renderHistMob(histDados);}
+    else{document.getElementById('histList').innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Nenhum registro ainda</div></div>';}
+  });
+}
+function renderHistMob(dados){
+  var search=document.getElementById('histSearch').value.toLowerCase();
+  var filtrados=dados.filter(function(d){
+    var nome=(d.nome||d['Nome']||'').toLowerCase();
+    return !search||nome.indexOf(search)>=0;
+  });
+  if(!filtrados.length){document.getElementById('histList').innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Nenhum resultado</div></div>';return;}
+  document.getElementById('histList').innerHTML=filtrados.slice(0,30).map(function(d,i){
+    var nome=d.nome||d['Nome']||'—';
+    var tam=d.tam||d['Camisa']||'—';
+    var calca=d.calca||d['Calca']||'—';
+    var conf=d.conf||d['Confianca (%)']||'—';
+    var ts=d.ts||d['Data/Hora']||'—';
+    var av=nome.charAt(0).toUpperCase();
+    var cores=['#2d6e2a','#3d5a6e','#6e3d2a','#5a6e2a','#6e2a5a'];
+    var cor=cores[i%cores.length];
+    return '<div class="hist-item">'+
+      '<div class="hi-av" style="background:'+cor+'">'+av+'</div>'+
+      '<div><div class="hi-name">'+nome+'</div><div class="hi-meta">'+ts+'</div></div>'+
+      '<div class="hi-right"><div class="hi-tam">'+tam+' / '+calca+'</div><div class="hi-conf">'+conf+'%</div></div>'+
+    '</div>';
+  }).join('');
+}
+function filtrarHist(){renderHistMob(histDados.length?histDados:diagDB);}
+function setHistTab(tab,el){
+  histTab=tab;
+  document.querySelectorAll('.tab-item').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function atuDash(){
+  document.getElementById('dLevant').textContent=diagDB.length;
+  document.getElementById('dHoje').textContent='Hoje: '+diagDB.filter(function(d){return d.ts&&d.ts.startsWith(new Date().toISOString().split('T')[0]);}).length;
+  document.getElementById('dUsers').textContent=diagDB.length;
+  document.getElementById('dUnifor').textContent='Cal: '+Object.keys(calibDB).length;
+  document.getElementById('dCal').textContent=Object.keys(calibDB).length+' entradas';
+  document.getElementById('dSync').textContent=localStorage.getItem('sf_sync')||'—';
+  // Recent
+  var html=diagDB.slice(-5).reverse().map(function(d,i){
+    var cores=['#2d6e2a','#3d5a6e','#6e3d2a'];
+    return '<div class="recent-item">'+
+      '<div class="ri-av" style="background:'+cores[i%3]+'">'+(d.nome||'?').charAt(0)+'</div>'+
+      '<div><div class="ri-name">'+(d.nome||'—')+'</div><div class="ri-meta">'+(d.ts?new Date(d.ts).toLocaleString('pt-BR','{hour:\'2-digit\',minute:\'2-digit\'}'):'—')+'</div></div>'+
+      '<div class="ri-badge badge-ok">'+(d.tam||'—')+'</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('recentList').innerHTML=html||'<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Nenhum registro ainda</div></div>';
+}
+function atuMais(){
+  document.getElementById('moreCalib').textContent=Object.keys(calibDB).length+' entradas';
+  document.getElementById('moreCam').textContent=navigator.mediaDevices?'Disponível':'Indisponível';
+}
+
+// ============================================================
+// API
+// ============================================================
+function apiGET(params,cb){
+  var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+  var url=API_URL+(API_URL.indexOf('?')>=0?'&':'?')+qs+'&v='+new Date().getTime();
+  fetch(url,{method:'GET',redirect:'follow'})
+  .then(function(r){return r.text();})
+  .then(function(txt){try{var d=JSON.parse(txt);if(cb)cb(d);}catch(e){if(cb)cb(null);}})
+  .catch(function(){if(cb)cb(null);});
+}
+function testarConexaoMob(){
+  var dot=document.getElementById('connDot');
+  dot.className='conn-dot';
+  apiGET({action:'ping'},function(d){
+    if(d&&d.ok){
+      dot.className='conn-dot online';
+      document.getElementById('dApi').textContent='Online';
+      document.getElementById('dApi').className='cal-val ok';
+      document.getElementById('statusTxt').textContent='Online';
+      localStorage.setItem('sf_sync',new Date().toLocaleString('pt-BR'));
+      document.getElementById('dSync').textContent=localStorage.getItem('sf_sync');
+      sincCalib();
+    } else {
+      dot.className='conn-dot offline';
+      document.getElementById('dApi').textContent='Offline';
+      document.getElementById('dApi').className='cal-val off';
+    }
+  });
+}
+function sincCalib(){
+  apiGET({action:'calibragem_list'},function(data){
+    if(data&&data.calibragens&&Object.keys(data.calibragens).length){
+      Object.keys(data.calibragens).forEach(function(k){calibDB[k]=data.calibragens[k];});
+      salvarDB('sf_calibragem',calibDB);
+      document.getElementById('dCal').textContent=Object.keys(calibDB).length+' entradas';
+    }
+  });
+}
+
+// ============================================================
+// FORNECEDORES
+// ============================================================
+function atuSelectForn(){
+  var sel=document.getElementById('mForn');
+  sel.innerHTML='<option value="">Não especificado</option>'+fornDB.map(function(f){return'<option value="'+f.nome+'">'+f.nome+' ('+f.ajuste+')</option>';}).join('');
+  // Busca da planilha
+  apiGET({action:'fornecedores'},function(data){
+    if(data&&data.fornecedores&&data.fornecedores.length){
+      fornDB=data.fornecedores;salvarDB('sf_fornecedores',fornDB);
+      sel.innerHTML='<option value="">Não especificado</option>'+fornDB.map(function(f){return'<option value="'+f.nome+'">'+f.nome+' ('+f.ajuste+')</option>';}).join('');
+    }
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('mobNome').textContent=localStorage.getItem('sf_nome')||'Admin';
+  document.getElementById('drawerNome').textContent=localStorage.getItem('sf_nome')||'Admin';
+  document.getElementById('drawerAv').textContent=(localStorage.getItem('sf_nome')||'A').charAt(0);
+  atuDash();
+  atuSelectForn();
+  setTimeout(testarConexaoMob,800);
+  setTimeout(sincCalib,1500);
+  navTo('dashboard');
+});
+</script>
+</body>
+</html>
